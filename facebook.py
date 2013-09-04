@@ -35,7 +35,10 @@ if user:
 
 import cgi
 import time
-import urllib
+try:
+    from django.utils.http import urlencode
+except ImportError:
+    from urllib import urlencode
 import urllib2
 import httplib
 import hashlib
@@ -288,10 +291,10 @@ class GraphAPI(object):
                 post_args["access_token"] = self.access_token
             else:
                 args["access_token"] = self.access_token
-        post_data = None if post_args is None else urllib.urlencode(post_args)
+        post_data = None if post_args is None else urlencode(post_args)
         try:
             file = urllib2.urlopen("https://graph.facebook.com/" + path + "?" +
-                                   urllib.urlencode(args),
+                                   urlencode(args),
                                    post_data, timeout=self.timeout)
         except urllib2.HTTPError, e:
             response = _parse_json(e.read())
@@ -301,7 +304,7 @@ class GraphAPI(object):
             if self.timeout:
                 socket.setdefaulttimeout(self.timeout)
             file = urllib2.urlopen("https://graph.facebook.com/" + path + "?" +
-                                   urllib.urlencode(args), post_data)
+                                   urlencode(args), post_data)
         try:
             fileInfo = file.info()
             if fileInfo.maintype == 'text':
@@ -334,21 +337,21 @@ class GraphAPI(object):
                 post_args["access_token"] = self.access_token
             else:
                 args["access_token"] = self.access_token
-        post_data = None if post_args is None else urllib.urlencode(post_args)
+        post_data = None if post_args is None else urlencode(post_args)
 
         args["q"] = query
         args["format"] = "json"
 
         try:
             file = urllib2.urlopen("https://graph.facebook.com/fql?" +
-                                   urllib.urlencode(args),
+                                   urlencode(args),
                                    post_data, timeout=self.timeout)
         except TypeError:
             # Timeout support for Python <2.6
             if self.timeout:
                 socket.setdefaulttimeout(self.timeout)
             file = urllib2.urlopen("https://graph.facebook.com/fql?" +
-                                   urllib.urlencode(args),
+                                   urlencode(args),
                                    post_data)
 
         try:
@@ -379,7 +382,7 @@ class GraphAPI(object):
         }
         response = urllib.urlopen("https://graph.facebook.com/oauth/"
                                   "access_token?" +
-                                  urllib.urlencode(args)).read()
+                                  urlencode(args)).read()
         query_str = parse_qs(response)
         if "access_token" in query_str:
             result = {"access_token": query_str["access_token"][0]}
@@ -499,7 +502,7 @@ def auth_url(app_id, canvas_url, perms=None, **kwargs):
     if perms:
         kvps['scope'] = ",".join(perms)
     kvps.update(kwargs)
-    return url + urllib.urlencode(kvps)
+    return url + urlencode(kvps)
 
 def get_access_token_from_code(code, redirect_uri, app_id, app_secret):
     """Get an access token from the "code" returned from an OAuth dialog.
@@ -517,7 +520,7 @@ def get_access_token_from_code(code, redirect_uri, app_id, app_secret):
     # We would use GraphAPI.request() here, except for that the fact
     # that the response is a key-value pair, and not JSON.
     response = urllib.urlopen("https://graph.facebook.com/oauth/access_token" +
-                              "?" + urllib.urlencode(args)).read()
+                              "?" + urlencode(args)).read()
     query_str = parse_qs(response)
     if "access_token" in query_str:
         result = {"access_token": query_str["access_token"][0]}
@@ -546,7 +549,7 @@ def get_app_access_token(app_id, app_secret):
             'client_secret': app_secret}
 
     file = urllib2.urlopen("https://graph.facebook.com/oauth/access_token?" +
-                           urllib.urlencode(args))
+                           urlencode(args))
 
     try:
         result = file.read().split("=")[1]
